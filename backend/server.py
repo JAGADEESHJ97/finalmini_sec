@@ -131,7 +131,7 @@ async def get_secret_info(request: Request, secret_id: str):
 
 @api_router.post("/secrets/{secret_id}/view")
 @limiter.limit("5/minute")
-async def view_secret(request: Request, secret_id: str, pin_data: Optional[PinVerify] = None):
+async def view_secret(request: Request, secret_id: str, pin_data: PinVerify = PinVerify()):
     """View and decrypt a secret (with optional PIN verification)"""
     secret = await db.secrets.find_one({"id": secret_id}, {"_id": 0})
     
