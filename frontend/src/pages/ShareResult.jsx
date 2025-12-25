@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Check, Plus, Shield, Clock, Eye, KeyRound, QrCode, Link as LinkIcon } from 'lucide-react';
+import { Copy, Check, Plus, Shield, Clock, Eye, KeyRound, QrCode, Link as LinkIcon, File } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 
@@ -12,7 +12,7 @@ export default function ShareResult() {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(true);
 
-  const { secretId, encryptionKey, expiryMinutes, oneTimeView, hasPin } = location.state || {};
+  const { secretId, encryptionKey, expiryMinutes, oneTimeView, hasPin, hasFiles, fileCount } = location.state || {};
 
   useEffect(() => {
     if (!secretId || !encryptionKey) {
@@ -153,7 +153,7 @@ export default function ShareResult() {
 
       {/* Settings Summary */}
       <motion.div 
-        className="grid gap-4 sm:grid-cols-3 mb-10"
+        className="grid gap-4 sm:grid-cols-4 mb-10"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -177,6 +177,14 @@ export default function ShareResult() {
           <p className="text-slate-300 text-sm font-medium">PIN Protected</p>
           <p className={`font-semibold ${hasPin ? 'text-emerald-400' : 'text-slate-500'}`}>
             {hasPin ? 'Yes' : 'No'}
+          </p>
+        </div>
+
+        <div className="glass rounded-lg p-4 text-center">
+          <File className="w-5 h-5 text-slate-500 mx-auto mb-2" />
+          <p className="text-slate-300 text-sm font-medium">Files</p>
+          <p className={`font-semibold ${hasFiles ? 'text-emerald-400' : 'text-slate-500'}`}>
+            {hasFiles ? `${fileCount} file${fileCount > 1 ? 's' : ''}` : 'None'}
           </p>
         </div>
       </motion.div>
