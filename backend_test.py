@@ -233,6 +233,178 @@ class CipherShareAPITester:
         )
         return success
 
+    def test_create_secret_with_files(self):
+        """Test creating a secret with files"""
+        # Mock encrypted file data
+        files_data = [
+            {
+                "encrypted_data": "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRIipRkwB0K1Y=",
+                "iv": "5d41402abc4b2a76b9719d911017c592",
+                "filename": "test.txt",
+                "file_type": "text/plain",
+                "file_size": 1024
+            },
+            {
+                "encrypted_data": "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRIipRkwB0K1Y=",
+                "iv": "5d41402abc4b2a76b9719d911017c593",
+                "filename": "image.jpg",
+                "file_type": "image/jpeg",
+                "file_size": 2048
+            }
+        ]
+        
+        success, response = self.run_test(
+            "Create Secret with Files",
+            "POST",
+            "secrets",
+            200,
+            data={
+                "encrypted_data": "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRIipRkwB0K1Y=",
+                "iv": "5d41402abc4b2a76b9719d911017c592",
+                "pin_hash": None,
+                "expiry_minutes": 60,
+                "one_time_view": False,
+                "files": files_data
+            }
+        )
+        if success and 'id' in response:
+            self.created_secrets.append(response['id'])
+            return response['id']
+        return None
+
+    def test_create_secret_files_only(self):
+        """Test creating a secret with only files (no text)"""
+        files_data = [
+            {
+                "encrypted_data": "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRIipRkwB0K1Y=",
+                "iv": "5d41402abc4b2a76b9719d911017c592",
+                "filename": "document.pdf",
+                "file_type": "application/pdf",
+                "file_size": 5120
+            }
+        ]
+        
+        success, response = self.run_test(
+            "Create Secret (Files Only)",
+            "POST",
+            "secrets",
+            200,
+            data={
+                "encrypted_data": " ",  # Empty text
+                "iv": "5d41402abc4b2a76b9719d911017c592",
+                "pin_hash": None,
+                "expiry_minutes": 60,
+                "one_time_view": False,
+                "files": files_data
+            }
+        )
+        if success and 'id' in response:
+            self.created_secrets.append(response['id'])
+            return response['id']
+        return None
+
+    def test_file_size_limit(self):
+        """Test file size limit validation (10MB total)"""
+        # Create files that exceed 10MB total
+        large_files = [
+            {
+                "encrypted_data": "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRIipRkwB0K1Y=",
+                "iv": "5d41402abc4b2a76b9719d911017c592",
+                "filename": "large1.zip",
+                "file_type": "application/zip",
+                "file_size": 6 * 1024 * 1024  # 6MB
+            },
+            {
+                "encrypted_data": "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRIipRkwB0K1Y=",
+                "iv": "5d41402abc4b2a76b9719d911017c593",
+                "filename": "large2.zip",
+                "file_type": "application/zip",
+                "file_size": 5 * 1024 * 1024  # 5MB (total 11MB)
+            }
+        ]
+        
+        success, response = self.run_test(
+            "File Size Limit Test",
+            "POST",
+            "secrets",
+            413,  # Payload Too Large
+            data={
+                "encrypted_data": "test",
+                "iv": "5d41402abc4b2a76b9719d911017c592",
+                "pin_hash": None,
+                "expiry_minutes": 60,
+                "one_time_view": False,
+                "files": large_files
+            }
+        )
+        return success
+
+    def test_get_secret_info_with_files(self, secret_id):
+        """Test getting secret info that includes file information"""
+        success, response = self.run_test(
+            "Get Secret Info (With Files)",
+            "GET",
+            f"secrets/{secret_id}",
+            200
+        )
+        
+        if success:
+            # Check if response includes file information
+            expected_fields = ['has_files', 'files_info']
+            for field in expected_fields:
+                if field not in response:
+                    self.log(f"❌ Missing field in response: {field}")
+                    return False
+            
+            if response.get('has_files'):
+                files_info = response.get('files_info', [])
+                if not files_info:
+                    self.log(f"❌ has_files is True but files_info is empty")
+                    return False
+                
+                # Check file info structure
+                for file_info in files_info:
+                    required_fields = ['filename', 'file_type', 'file_size']
+                    for field in required_fields:
+                        if field not in file_info:
+                            self.log(f"❌ Missing field in file_info: {field}")
+                            return False
+                
+                self.log(f"✅ File info validation passed - {len(files_info)} files")
+        
+        return success, response
+
+    def test_view_secret_with_files(self, secret_id):
+        """Test viewing a secret that contains files"""
+        success, response = self.run_test(
+            "View Secret (With Files)",
+            "POST",
+            f"secrets/{secret_id}/view",
+            200,
+            data={}
+        )
+        
+        if success:
+            # Check if response includes file data
+            if 'files' in response and response['files']:
+                files = response['files']
+                self.log(f"✅ Retrieved {len(files)} files")
+                
+                # Check file structure
+                for i, file_data in enumerate(files):
+                    required_fields = ['encrypted_data', 'iv', 'filename', 'file_type', 'file_size']
+                    for field in required_fields:
+                        if field not in file_data:
+                            self.log(f"❌ Missing field in file {i}: {field}")
+                            return False
+                
+                self.log(f"✅ File data validation passed")
+            else:
+                self.log(f"❌ Expected files in response but got none")
+                return False
+        
+        return success, response
+
     def test_invalid_data(self):
         """Test creating secret with invalid data"""
         # Test with missing required fields
