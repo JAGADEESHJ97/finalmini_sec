@@ -6,7 +6,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import Optional, List
 import secrets
 import hashlib
 from datetime import datetime, timezone, timedelta
@@ -16,6 +16,9 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from starlette.responses import JSONResponse
+
+# File size limit (10MB)
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -45,16 +48,31 @@ app.state.limiter = limiter
 api_router = APIRouter(prefix="/api")
 
 # Models
+class FileData(BaseModel):
+    encrypted_data: str
+    iv: str
+    filename: str
+    file_type: str
+    file_size: int
+
 class SecretCreate(BaseModel):
     encrypted_data: str
     iv: str
     pin_hash: Optional[str] = None
     expiry_minutes: int = Field(ge=1, le=1440)  # 1 min to 24 hours
     one_time_view: bool = False
+    files: Optional[List[FileData]] = None
 
 class SecretResponse(BaseModel):
     id: str
     message: str
+
+class FileFetch(BaseModel):
+    encrypted_data: str
+    iv: str
+    filename: str
+    file_type: str
+    file_size: int
 
 class SecretFetch(BaseModel):
     encrypted_data: str
@@ -62,6 +80,7 @@ class SecretFetch(BaseModel):
     one_time_view: bool
     expires_at: str
     has_pin: bool
+    files: Optional[List[FileFetch]] = None
 
 class PinVerify(BaseModel):
     pin_hash: Optional[str] = None
@@ -81,8 +100,28 @@ async def root():
 @api_router.post("/secrets", response_model=SecretResponse)
 async def create_secret(secret: SecretCreate):
     """Create a new encrypted secret"""
+    # Validate file sizes
+    if secret.files:
+        total_size = sum(f.file_size for f in secret.files)
+        if total_size > MAX_FILE_SIZE:
+            raise HTTPException(status_code=413, detail=f"Total file size exceeds {MAX_FILE_SIZE // (1024*1024)}MB limit")
+    
     token = generate_secure_token()
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=secret.expiry_minutes)
+    
+    # Prepare files data
+    files_data = None
+    if secret.files:
+        files_data = [
+            {
+                "encrypted_data": f.encrypted_data,
+                "iv": f.iv,
+                "filename": f.filename,
+                "file_type": f.file_type,
+                "file_size": f.file_size
+            }
+            for f in secret.files
+        ]
     
     doc = {
         "id": token,
@@ -93,7 +132,8 @@ async def create_secret(secret: SecretCreate):
         "one_time_view": secret.one_time_view,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "expires_at": expires_at.isoformat(),
-        "viewed": False
+        "viewed": False,
+        "files": files_data
     }
     
     await db.secrets.insert_one(doc)
@@ -123,10 +163,20 @@ async def get_secret_info(request: Request, secret_id: str):
         await db.secrets.delete_one({"id": secret_id})
         raise HTTPException(status_code=410, detail="Secret has already been viewed")
     
+    # Get file info without encrypted data
+    files_info = None
+    if secret.get("files"):
+        files_info = [
+            {"filename": f["filename"], "file_type": f["file_type"], "file_size": f["file_size"]}
+            for f in secret["files"]
+        ]
+    
     return {
         "has_pin": secret.get("pin_hash") is not None,
         "one_time_view": secret.get("one_time_view", False),
-        "expires_at": secret["expires_at"]
+        "expires_at": secret["expires_at"],
+        "has_files": secret.get("files") is not None and len(secret.get("files", [])) > 0,
+        "files_info": files_info
     }
 
 @api_router.post("/secrets/{secret_id}/view")
@@ -163,12 +213,27 @@ async def view_secret(request: Request, secret_id: str, pin_data: PinVerify = Pi
             {"$set": {"viewed": True}}
         )
     
+    # Prepare files data
+    files_data = None
+    if secret.get("files"):
+        files_data = [
+            FileFetch(
+                encrypted_data=f["encrypted_data"],
+                iv=f["iv"],
+                filename=f["filename"],
+                file_type=f["file_type"],
+                file_size=f["file_size"]
+            )
+            for f in secret["files"]
+        ]
+    
     return SecretFetch(
         encrypted_data=secret["encrypted_data"],
         iv=secret["iv"],
         one_time_view=secret.get("one_time_view", False),
         expires_at=secret["expires_at"],
-        has_pin=secret.get("pin_hash") is not None
+        has_pin=secret.get("pin_hash") is not None,
+        files=files_data
     )
 
 @api_router.delete("/secrets/{secret_id}")
