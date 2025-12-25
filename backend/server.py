@@ -64,7 +64,7 @@ class SecretFetch(BaseModel):
     has_pin: bool
 
 class PinVerify(BaseModel):
-    pin_hash: str
+    pin_hash: Optional[str] = None
 
 # Helper to generate secure random token (32 bytes = 64 hex chars)
 def generate_secure_token() -> str:
