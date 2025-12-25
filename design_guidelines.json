@@ -1,0 +1,138 @@
+{
+  "identity": {
+    "name": "CipherShare",
+    "persona": "The Glass Vault",
+    "tone": "Secure, Ephemeral, Architectural, Trustworthy",
+    "archetype": "Jewel & Luxury (Deep Slate + Emerald Glow)"
+  },
+  "typography": {
+    "primary_font": "Manrope",
+    "heading_font": "Unbounded",
+    "mono_font": "JetBrains Mono",
+    "import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600&family=Unbounded:wght@400;600;700&display=swap",
+    "usage": {
+      "headings": "font-unbounded font-bold tracking-tight",
+      "body": "font-manrope text-slate-300",
+      "secrets": "font-mono text-emerald-400 bg-slate-950/50 p-4 rounded-md border border-emerald-500/20"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#020617",
+      "foreground": "#f8fafc",
+      "primary": "#10b981",
+      "primary_foreground": "#020617",
+      "secondary": "#1e293b",
+      "accent": "#06b6d4",
+      "destructive": "#ef4444",
+      "muted": "#334155",
+      "border": "#1e293b"
+    },
+    "gradients": {
+      "hero_glow": "radial-gradient(circle at center, rgba(16, 185, 129, 0.15) 0%, rgba(2, 6, 23, 0) 70%)",
+      "beam": "linear-gradient(to right, transparent, #10b981, transparent)"
+    },
+    "rules": [
+      "Never use pure black (#000000). Use #020617 (Slate 950).",
+      "Primary color (Emerald) is for SUCCESS and SECURITY only.",
+      "Destructive color (Red) is for EXPIRY and DELETION only."
+    ]
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "class": "bg-slate-950/70 backdrop-blur-xl border border-slate-800/50 shadow-2xl",
+      "usage": "Main containers, modals, sticky headers"
+    },
+    "tracing_beam": {
+      "description": "A glowing gradient line that moves around the active input field.",
+      "implementation": "Use CSS keyframes or Tailwind animate-pulse on a pseudo-element border."
+    },
+    "noise_texture": {
+      "description": "Subtle grain to prevent banding in dark gradients.",
+      "css": "background-image: url('data:image/svg+xml,...'); opacity: 0.05; pointer-events: none;"
+    }
+  },
+  "layout_strategy": {
+    "container": "max-w-3xl mx-auto px-6 py-12 md:py-24",
+    "grid_system": "Mode A: Tetris (for Landing), Mode B: Control Room (for View Secret)",
+    "spacing": {
+      "section_gap": "gap-16 md:gap-24",
+      "internal_padding": "p-6 md:p-10"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "h-12 px-8 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]",
+      "secondary": "h-12 px-8 rounded-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+    },
+    "inputs": {
+      "textarea": "w-full bg-transparent border-0 text-xl md:text-2xl font-mono text-slate-200 placeholder:text-slate-600 focus:ring-0 resize-none min-h-[200px]",
+      "wrapper": "relative rounded-xl border border-slate-800 bg-slate-900/30 focus-within:border-emerald-500/50 transition-colors"
+    },
+    "cards": {
+      "style": "glassmorphism rounded-2xl overflow-hidden"
+    }
+  },
+  "image_urls": {
+    "hero_background": {
+      "url": "https://images.pexels.com/photos/1089438/pexels-photo-1089438.jpeg",
+      "description": "Matrix code flow for subtle background texture (set opacity to 0.1)",
+      "category": "background"
+    },
+    "security_icon": {
+      "url": "https://images.pexels.com/photos/8347501/pexels-photo-8347501.jpeg",
+      "description": "3D Shield icon for the 'Secure' confirmation screen",
+      "category": "illustration"
+    },
+    "lock_concept": {
+      "url": "https://images.pexels.com/photos/5475813/pexels-photo-5475813.jpeg",
+      "description": "Cyber lock for the 'Password Required' screen",
+      "category": "illustration"
+    }
+  },
+  "motion": {
+    "library": "framer-motion",
+    "install_command": "yarn add framer-motion",
+    "animations": {
+      "fade_in": {
+        "initial": { "opacity": 0, "y": 20 },
+        "animate": { "opacity": 1, "y": 0 },
+        "transition": { "duration": 0.5, "ease": "easeOut" }
+      },
+      "stagger": {
+        "container": { "hidden": { "opacity": 0 }, "show": { "opacity": 1, "transition": { "staggerChildren": 0.1 } } },
+        "item": { "hidden": { "opacity": 0, "y": 10 }, "show": { "opacity": 1, "y": 0 } }
+      }
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure text is Slate-200 or lighter on Slate-950 backgrounds.",
+    "focus_states": "Visible Emerald-500 ring on all interactive elements.",
+    "aria": "Use aria-live for countdown timers and status updates."
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALLATION: Run 'yarn add framer-motion' immediately.",
+    "2. SETUP: Add the Google Fonts import to 'index.css' or 'App.css'.",
+    "3. THEME: Force Dark Mode by default. Add 'dark' class to the html/body tag initially.",
+    "4. LAYOUT: Do not use a standard navbar. Use a floating 'Dock' or minimal header.",
+    "5. ENCRYPTION: Ensure the 'Encrypting...' state is VISUAL. Show a progress bar or scrambling text effect.",
+    "6. QR CODE: Use a library like 'qrcode.react' and style it with a white border so it scans on dark backgrounds.",
+    "7. FILE EXTENSIONS: Use .js or .jsx for all React files as per project constraints.",
+    "8. TOASTS: Use 'sonner' for all notifications (Link copied, Secret created).",
+    "9. TESTING: Add 'data-testid' to the main textarea ('secret-input'), create button ('create-btn'), and pin input ('pin-input')."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition. Eg: 'transition: all'.",
+    "You MUST NOT center align the app container.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations.",
+    "NEVER use AI assistant Emoji characters like 🤖🧠 etc.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations.",
+    "Use 'sonner' for toasts."
+  ]
+}
