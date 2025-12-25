@@ -11,13 +11,14 @@ const apiClient = axios.create({
 });
 
 // Create a new secret
-export const createSecret = async ({ encryptedData, iv, pinHash, expiryMinutes, oneTimeView }) => {
+export const createSecret = async ({ encryptedData, iv, pinHash, expiryMinutes, oneTimeView, files }) => {
   const response = await apiClient.post('/secrets', {
     encrypted_data: encryptedData,
     iv: iv,
     pin_hash: pinHash || null,
     expiry_minutes: expiryMinutes,
-    one_time_view: oneTimeView
+    one_time_view: oneTimeView,
+    files: files || null
   });
   return response.data;
 };
